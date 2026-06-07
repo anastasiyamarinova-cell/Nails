@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>NailAR</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--cream:#fdf6f0;--mauve:#c4798a;--deep:#1e1015;--gold:#d4a853}
+html,body{height:100%;overflow:hidden;background:var(--deep);font-family:'DM Sans',sans-serif;color:var(--cream)}
+#start{position:fixed;inset:0;z-index:50;background:radial-gradient(ellipse at 45% 35%,#3d1a28 0%,var(--deep) 68%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:32px;text-align:center}
+.s-icon{font-size:4rem;animation:bob 2.8s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.s-title{font-family:'Playfair Display',serif;font-size:clamp(2rem,9vw,3rem);line-height:1.1}
+.s-title em{color:var(--gold);font-style:italic}
+.s-sub{font-size:.9rem;color:rgba(253,246,240,.55);max-width:270px;line-height:1.6}
+.s-btn{padding:15px 40px;background:linear-gradient(135deg,var(--mauve),var(--gold));color:#fff;border:none;border-radius:999px;font-size:1rem;font-weight:500;cursor:pointer}
+#loading{position:fixed;inset:0;z-index:45;background:var(--deep);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:32px}
+.ring{width:48px;height:48px;border:3px solid rgba(212,168,83,.18);border-top-color:var(--gold);border-radius:50%;animation:spin .85s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#load-msg{font-size:.88rem;color:rgba(253,246,240,.65)}
+#load-sub{font-size:.72rem;color:rgba(212,168,83,.55);max-width:260px;line-height:1.6}
+#wrap{position:fixed;inset:0;display:none}
+#vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+#cv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;transform:scaleX(-1)}
+#hdr{position:fixed;top:0;left:0;right:0;z-index:30;display:none;padding:14px 18px 8px;justify-content:space-between;align-items:center;background:linear-gradient(to bottom,rgba(20,10,14,.85),transparent)}
+.logo{font-family:'Playfair Display',serif;font-size:1.3rem}.logo b{color:var(--gold);font-style:italic}
+.pill{font-size:.6rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:4px 11px;border-radius:999px;background:rgba(212,168,83,.18);color:var(--gold);border:1px solid rgba(212,168,83,.35)}
+.pill.live{background:rgba(80,200,100,.18);color:#7ddf8f;border-color:rgba(80,200,100,.35)}
+#panel{position:fixed;bottom:0;left:0;right:0;z-index:30;display:none;padding:8px 0 max(10px,env(safe-area-inset-bottom));background:linear-gradient(to top,rgba(20,10,14,.97) 65%,transparent)}
+.lbl{font-size:.57rem;letter-spacing:.14em;text-transform:uppercase;color:rgba(253,246,240,.38);padding:0 14px;margin-bottom:5px}
+.srow{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-bottom:8px}
+.srow::-webkit-scrollbar{display:none}
+.sinner{display:flex;gap:6px;padding:2px 14px;width:max-content;align-items:center}
+.chip{padding:5px 12px;border-radius:999px;font-size:.7rem;cursor:pointer;background:rgba(253,246,240,.07);border:1px solid rgba(253,246,240,.12);color:rgba(253,246,240,.6);white-space:nowrap;font-family:'DM Sans',sans-serif}
+.chip.on{background:var(--mauve);border-color:var(--mauve);color:#fff}
+.shp{padding:5px 10px;border-radius:999px;font-size:.67rem;cursor:pointer;background:rgba(253,246,240,.07);border:1px solid rgba(253,246,240,.12);color:rgba(253,246,240,.6);white-space:nowrap;font-family:'DM Sans',sans-serif}
+.shp.on{background:rgba(212,168,83,.25);border-color:var(--gold);color:var(--gold)}
+.sw{width:33px;height:33px;border-radius:50%;cursor:pointer;border:3px solid transparent;box-shadow:0 2px 6px rgba(0,0,0,.4);flex-shrink:0}
+.sw.on{border-color:#fff;transform:scale(1.2)}
+.sr{display:flex;align-items:center;gap:8px;padding:0 14px;margin-bottom:4px}
+.sr label{font-size:.58rem;color:rgba(253,246,240,.38);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;min-width:50px}
+.sr input{flex:1;accent-color:var(--mauve)}
+.sr span{font-size:.62rem;color:rgba(253,246,240,.4);min-width:36px;text-align:right}
+.hint{text-align:center;font-size:.6rem;color:rgba(253,246,240,.2);margin-top:3px}
+#err{position:fixed;inset:0;z-index:60;background:var(--deep);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px;text-align:center}
+#err-msg{font-size:.88rem;color:#f87171;line-height:1.7;max-width:290px}
+#err-det{font-size:.7rem;color:rgba(253,246,240,.3);max-width:290px;line-height:1.6;word-break:break-word}
+.ebtn{padding:11px 26px;border-radius:999px;border:none;background:var(--mauve);color:#fff;font-size:.88rem;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="start">
+  <div class="s-icon">💅</div>
+  <h1 class="s-title">Virtual<br><em>Nail Try-On</em></h1>
+  <p class="s-sub">Try colours, shapes and lengths on your real hand in real time.</p>
+  <button class="s-btn" id="btnStart">Open Camera</button>
+</div>
+<div id="loading">
+  <div class="ring"></div>
+  <div id="load-msg">Starting…</div>
+  <div id="load-sub"></div>
+</div>
+<div id="err">
+  <div style="font-size:3rem">⚠️</div>
+  <p id="err-msg"></p><p id="err-det"></p>
+  <button class="ebtn" onclick="location.reload()">Try Again</button>
+</div>
+<div id="wrap">
+  <video id="vid" autoplay muted playsinline></video>
+  <canvas id="cv"></canvas>
+</div>
+<header id="hdr">
+  <div class="logo">Nail<b>AR</b></div>
+  <div class="pill" id="pill">Searching…</div>
+</header>
+<div id="panel">
+  <div class="lbl">Finish</div>
+  <div class="srow"><div class="sinner" id="chips"></div></div>
+  <div class="lbl">Shape</div>
+  <div class="srow"><div class="sinner" id="shapes"></div></div>
+  <div class="lbl">Colour</div>
+  <div class="srow"><div class="sinner" id="swatches"></div></div>
+  <div class="sr"><label>Length</label><input type="range" id="lenSlider" min="80" max="320" value="100"><span id="lenVal">Natural</span></div>
+  <div class="sr"><label>Opacity</label><input type="range" id="opSlider" min="30" max="100" value="85"><span id="opVal">85%</span></div>
+  <div class="hint">Palm facing camera · Good light · Hold steady</div>
+</div>
+
+<!-- Use older handpose model which returns pixel coords directly -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.8.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/handpose@0.0.7/dist/handpose.min.js"></script>
+
+<script>
+var S={color:'#c4203e',finish:'solid',shape:'oval',length:100,alpha:0.85};
+var FINISHES=['solid','french','ombre','glitter','chrome','matte'];
+var FL=['Solid','French','Ombré','Glitter','Chrome','Matte'];
+var SHAPES=['square','squoval','oval','rounded','almond','stiletto','ballerina','flare'];
+var SL=['Square','Squoval','Oval','Rounded','Almond','Stiletto','Ballerina','Flare'];
+var COLORS=['#e8a0ae','#f5c4d3','#d4276a','#c4203e','#8b1a3c','#d4a853','#c0bfbd','#9b59b6','#2c3e50','#1abc9c','#ff6b35','#f4a261','#f8f8f8','#111111','#a0522d','#e91e8c'];
+var LEN=[[80,'Natural'],[120,'Short+'],[160,'Medium'],[210,'Long'],[260,'X-Long'],[320,'XXL']];
+function lenName(v){var n='Natural';for(var i=0;i<LEN.length;i++){if(v>=LEN[i][0])n=LEN[i][1];}return n;}
+
+var CE=document.getElementById('chips'),SE=document.getElementById('shapes'),SW=document.getElementById('swatches');
+FINISHES.forEach(function(id,i){var b=document.createElement('button');b.className='chip'+(id==='solid'?' on':'');b.textContent=FL[i];b.onclick=function(){S.finish=id;CE.querySelectorAll('.chip').forEach(function(x){x.classList.remove('on')});b.classList.add('on');};CE.appendChild(b);});
+SHAPES.forEach(function(id,i){var b=document.createElement('button');b.className='shp'+(id==='oval'?' on':'');b.textContent=SL[i];b.onclick=function(){S.shape=id;SE.querySelectorAll('.shp').forEach(function(x){x.classList.remove('on')});b.classList.add('on');};SE.appendChild(b);});
+COLORS.forEach(function(h){var d=document.createElement('div');d.className='sw'+(h===S.color?' on':'');d.style.background=h;d.onclick=function(){S.color=h;SW.querySelectorAll('.sw').forEach(function(x){x.classList.remove('on')});d.classList.add('on');};SW.appendChild(d);});
+document.getElementById('lenSlider').oninput=function(){S.length=+this.value;document.getElementById('lenVal').textContent=lenName(S.length);};
+document.getElementById('opSlider').oninput=function(){S.alpha=+this.value/100;document.getElementById('opVal').textContent=this.value+'%';};
+
+// Old handpose model landmark indices
+// landmarks[i] = [x, y, z] in VIDEO pixel coordinates
+// Finger tips: thumb=4, index=8, middle=12, ring=16, pinky=20
+// Finger pips: thumb=3, index=7, middle=11, ring=15, pinky=19
+// Finger mcps: thumb=2, index=6, middle=10, ring=14, pinky=18
+var FINGERS=[
+  {tip:4,pip:3,mcp:2,thumb:true},
+  {tip:8,pip:7,mcp:6,thumb:false},
+  {tip:12,pip:11,mcp:10,thumb:false},
+  {tip:16,pip:15,mcp:14,thumb:false},
+  {tip:20,pip:19,mcp:18,thumb:false}
+];
+
+function drawNail(ctx,tip,pip,mcp,isThumb,scaleX,scaleY){
+  // tip, pip, mcp are [x,y,z] arrays in video pixel coords
+  // scale to canvas size
+  var tx=tip[0]*scaleX, ty=tip[1]*scaleY;
+  var px=pip[0]*scaleX, py=pip[1]*scaleY;
+  var mx=mcp[0]*scaleX, my=mcp[1]*scaleY;
+
+  var col=S.color,fin=S.finish,shp=S.shape,al=S.alpha,lm=S.length/100;
+  var dx=tx-px,dy=ty-py,len=Math.sqrt(dx*dx+dy*dy)||1;
+  var nx=-dy/len,ny=dx/len,ux=dx/len,uy=dy/len;
+  var fw=Math.sqrt((px-mx)*(px-mx)+(py-my)*(py-my));
+  var hw=isThumb?fw*.52:fw*.45;
+  var nl=(isThumb?len*1.05:len*1.15)*lm;
+  var b1={x:px+nx*hw,y:py+ny*hw},b2={x:px-nx*hw,y:py-ny*hw};
+  var t1={x:b1.x+ux*nl,y:b1.y+uy*nl},t2={x:b2.x+ux*nl,y:b2.y+uy*nl};
+  var tc={x:(t1.x+t2.x)/2,y:(t1.y+t2.y)/2},bc={x:(b1.x+b2.x)/2-nx*hw*.06,y:(b1.y+b2.y)/2-ny*hw*.06};
+
+  function path(){
+    ctx.beginPath();ctx.moveTo(b1.x,b1.y);ctx.quadraticCurveTo(bc.x,bc.y,b2.x,b2.y);
+    if(shp==='square'){ctx.lineTo(t2.x,t2.y);ctx.lineTo(t1.x,t1.y);}
+    else if(shp==='squoval'){ctx.lineTo(t2.x,t2.y);ctx.quadraticCurveTo(tc.x,tc.y+uy*hw*.5,t1.x,t1.y);}
+    else if(shp==='rounded'){ctx.lineTo(t2.x,t2.y);ctx.quadraticCurveTo(tc.x,tc.y+uy*hw*.7,t1.x,t1.y);}
+    else if(shp==='oval'){ctx.lineTo(t2.x,t2.y);ctx.quadraticCurveTo(tc.x,tc.y+uy*hw*1.2,t1.x,t1.y);}
+    else if(shp==='almond'){ctx.lineTo(t2.x-nx*hw*.3,t2.y-ny*hw*.3);ctx.quadraticCurveTo(tc.x+ux*hw*.3,tc.y+uy*hw*.3,t1.x-nx*hw*.3,t1.y-ny*hw*.3);}
+    else if(shp==='stiletto'){ctx.lineTo(t2.x-nx*hw*.6,t2.y-ny*hw*.6);ctx.lineTo(tc.x+ux*hw*.5,tc.y+uy*hw*.5);ctx.lineTo(t1.x-nx*hw*.6,t1.y-ny*hw*.6);}
+    else if(shp==='ballerina'){var bw=hw*.55,bt1={x:b1.x+ux*nl-nx*(hw-bw),y:b1.y+uy*nl-ny*(hw-bw)},bt2={x:b2.x+ux*nl+nx*(hw-bw),y:b2.y+uy*nl+ny*(hw-bw)};ctx.lineTo(bt2.x,bt2.y);ctx.lineTo(bt1.x,bt1.y);}
+    else if(shp==='flare'){var fw2=hw*1.5,ft1={x:b1.x+ux*nl+nx*(fw2-hw),y:b1.y+uy*nl+ny*(fw2-hw)},ft2={x:b2.x+ux*nl-nx*(fw2-hw),y:b2.y+uy*nl-ny*(fw2-hw)};ctx.lineTo(ft2.x,ft2.y);ctx.lineTo(ft1.x,ft1.y);}
+    else{ctx.lineTo(t2.x,t2.y);ctx.quadraticCurveTo(tc.x,tc.y+uy*hw,t1.x,t1.y);}
+    ctx.closePath();
+  }
+  function bbox(){var xs=[b1.x,b2.x,t1.x,t2.x,tc.x],ys=[b1.y,b2.y,t1.y,t2.y,tc.y];return{x:Math.min.apply(null,xs)-4,y:Math.min.apply(null,ys)-4,w:Math.max.apply(null,xs)-Math.min.apply(null,xs)+8,h:Math.max.apply(null,ys)-Math.min.apply(null,ys)+8};}
+  function fill(){var b=bbox();ctx.fillRect(b.x,b.y,b.w,b.h);}
+  function rgb(h){return{r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),16),b:parseInt(h.slice(5,7),16)};}
+
+  ctx.save();ctx.globalAlpha=al;
+  if(fin==='solid'){path();ctx.fillStyle=col;ctx.fill();}
+  else if(fin==='matte'){path();ctx.fillStyle=col;ctx.fill();ctx.globalAlpha=al*.2;path();ctx.fillStyle='#aaa';ctx.fill();ctx.globalAlpha=al;}
+  else if(fin==='french'){path();ctx.fillStyle='#f5ede9';ctx.fill();ctx.save();path();ctx.clip();var s1={x:b1.x+ux*nl*.68,y:b1.y+uy*nl*.68},s2={x:b2.x+ux*nl*.68,y:b2.y+uy*nl*.68},sc={x:(s1.x+s2.x)/2,y:(s1.y+s2.y)/2};ctx.beginPath();ctx.moveTo(s1.x,s1.y);ctx.quadraticCurveTo(sc.x,sc.y,s2.x,s2.y);ctx.lineTo(t2.x,t2.y);ctx.quadraticCurveTo(tc.x,tc.y+uy*hw*.8,t1.x,t1.y);ctx.closePath();ctx.fillStyle=col;ctx.fill();ctx.restore();}
+  else if(fin==='ombre'){var c=rgb(col);path();ctx.save();path();ctx.clip();var gr=ctx.createLinearGradient(px,py,px+ux*nl,py+uy*nl);gr.addColorStop(0,'rgba(255,255,255,.5)');gr.addColorStop(.5,'rgba('+c.r+','+c.g+','+c.b+',.6)');gr.addColorStop(1,col);ctx.fillStyle=gr;fill();ctx.restore();}
+  else if(fin==='glitter'){path();ctx.fillStyle=col;ctx.fill();ctx.save();path();ctx.clip();for(var i=0;i<60;i++){var fx=b2.x+Math.random()*hw*2.2,fy=b1.y+Math.random()*(t1.y-b1.y+nl*.2);ctx.globalAlpha=Math.random()*.9+.1;ctx.fillStyle=Math.random()>.45?'rgba(255,255,255,.95)':'rgba(255,248,180,.9)';ctx.beginPath();ctx.arc(fx,fy,Math.random()*2+.3,0,Math.PI*2);ctx.fill();}ctx.restore();ctx.globalAlpha=al;}
+  else if(fin==='chrome'){path();ctx.save();path();ctx.clip();var g=ctx.createLinearGradient(b2.x,b2.y,t1.x,t1.y);g.addColorStop(0,'#444');g.addColorStop(.2,'#ccc');g.addColorStop(.4,'#fff');g.addColorStop(.6,col);g.addColorStop(.8,'#aaa');g.addColorStop(1,'#333');ctx.fillStyle=g;ctx.globalAlpha=al;fill();ctx.restore();}
+  // shine
+  ctx.save();ctx.globalAlpha=al*.18;path();ctx.clip();var sg=ctx.createLinearGradient(b1.x,b1.y,b2.x,b2.y);sg.addColorStop(0,'rgba(255,255,255,.85)');sg.addColorStop(.4,'rgba(255,255,255,0)');ctx.fillStyle=sg;fill();ctx.restore();
+  // shadow
+  ctx.save();ctx.globalAlpha=al*.2;ctx.beginPath();ctx.moveTo(b1.x,b1.y);ctx.quadraticCurveTo(bc.x,bc.y,b2.x,b2.y);ctx.lineTo(b2.x+ux*hw*.35,b2.y+uy*hw*.35);ctx.quadraticCurveTo(bc.x,bc.y,b1.x+ux*hw*.35,b1.y+uy*hw*.35);ctx.closePath();ctx.fillStyle='rgba(0,0,0,.5)';ctx.fill();ctx.restore();
+  ctx.restore();
+}
+
+var vid=document.getElementById('vid');
+var cv=document.getElementById('cv');
+var ctx2=cv.getContext('2d');
+var pill=document.getElementById('pill');
+var model=null;
+var lastPredictions=[];
+var detecting=false;
+
+function setSize(){
+  cv.width=window.innerWidth;
+  cv.height=window.innerHeight;
+}
+window.addEventListener('resize',setSize);
+
+function render(){
+  ctx2.clearRect(0,0,cv.width,cv.height);
+  if(lastPredictions.length>0 && vid.videoWidth>0){
+    var scaleX=cv.width/vid.videoWidth;
+    var scaleY=cv.height/vid.videoHeight;
+    lastPredictions.forEach(function(hand){
+      var lm=hand.landmarks;
+      // Draw debug dots
+      lm.forEach(function(pt,i){
+        var x=pt[0]*scaleX, y=pt[1]*scaleY;
+        var isTip=(i===4||i===8||i===12||i===16||i===20);
+        ctx2.beginPath();
+        ctx2.arc(x,y,isTip?16:8,0,Math.PI*2);
+        ctx2.fillStyle=isTip?'rgba(255,0,100,0.9)':'rgba(0,220,255,0.7)';
+        ctx2.fill();
+      });
+      // Draw nails
+      FINGERS.forEach(function(f){
+        var tip=lm[f.tip],pip=lm[f.pip],mcp=lm[f.mcp];
+        if(tip&&pip&&mcp) drawNail(ctx2,tip,pip,mcp,f.thumb,scaleX,scaleY);
+      });
+    });
+  }
+  requestAnimationFrame(render);
+}
+
+async function detectLoop(){
+  if(!model||detecting||!vid.videoWidth){
+    setTimeout(detectLoop,100);
+    return;
+  }
+  detecting=true;
+  try{
+    var predictions=await model.estimateHands(vid);
+    lastPredictions=predictions||[];
+    pill.textContent=predictions.length?'● Live':'Searching…';
+    pill.className=predictions.length?'pill live':'pill';
+  }catch(e){}
+  detecting=false;
+  setTimeout(detectLoop,80);
+}
+
+function setMsg(m,s){document.getElementById('load-msg').textContent=m;document.getElementById('load-sub').textContent=s||'';}
+function showErr(m,d){document.getElementById('loading').style.display='none';document.getElementById('err').style.display='flex';document.getElementById('err-msg').textContent=m;document.getElementById('err-det').textContent=d||'';}
+
+async function init(){
+  document.getElementById('start').style.display='none';
+  document.getElementById('loading').style.display='flex';
+  setMsg('Starting camera…');
+
+  var stream;
+  try{
+    try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:640},height:{ideal:480}},audio:false});}
+    catch(e){stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});}
+  }catch(e){showErr('Camera denied.','Allow camera then reload.');return;}
+
+  vid.srcObject=stream;
+  await new Promise(function(res){vid.onloadedmetadata=function(){vid.play().then(res).catch(res);};});
+  setMsg('Loading hand model…','Please wait ~15 seconds');
+
+  try{
+    await tf.setBackend('webgl');
+    await tf.ready();
+  }catch(e){
+    try{await tf.setBackend('cpu');await tf.ready();}
+    catch(e2){showErr('TF failed.',e2.message);return;}
+  }
+
+  try{
+    model=await handpose.load();
+  }catch(e){showErr('Model failed to load.',e.message);return;}
+
+  setSize();
+  document.getElementById('loading').style.display='none';
+  document.getElementById('wrap').style.display='block';
+  document.getElementById('hdr').style.display='flex';
+  document.getElementById('panel').style.display='block';
+
+  render();
+  detectLoop();
+}
+
+document.getElementById('btnStart').addEventListener('click',init);
+</script>
+</body>
+</html>
